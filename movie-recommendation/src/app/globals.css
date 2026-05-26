@@ -1,0 +1,54 @@
+@import "tailwindcss";
+
+:root {
+  --background: #f7f1e7;
+  --foreground: #1b1a17;
+  --surface: #fff8ef;
+  --surface-strong: #efe2d0;
+  --accent: #ff6b3d;
+  --accent-ink: #7a2e17;
+  --ink-muted: #5b5448;
+  --ring: rgba(27, 26, 23, 0.18);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-surface: var(--surface);
+  --color-surface-strong: var(--surface-strong);
+  --color-accent: var(--accent);
+  --color-accent-ink: var(--accent-ink);
+  --color-ink-muted: var(--ink-muted);
+  --font-body: var(--font-body);
+  --font-display: var(--font-display);
+}
+
+body {
+  background: radial-gradient(
+      circle at 15% 20%,
+      rgba(255, 214, 170, 0.4),
+      transparent 45%
+    ),
+    radial-gradient(
+      circle at 85% 10%,
+      rgba(255, 141, 109, 0.28),
+      transparent 40%
+    ),
+    radial-gradient(
+      circle at 85% 85%,
+      rgba(120, 196, 191, 0.35),
+      transparent 45%
+    ),
+    var(--background);
+  color: var(--foreground);
+  font-family: var(--font-body), "Trebuchet MS", sans-serif;
+  min-height: 100%;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+::selection {
+  background: rgba(255, 107, 61, 0.25);
+}
