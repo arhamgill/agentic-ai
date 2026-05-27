@@ -79,6 +79,43 @@ const stripCodeFences = (text: string) => {
   return withoutFences;
 };
 
+const normalizeJson = (text: string) =>
+  text
+    .replace(/[“”]/g, '"')
+    .replace(/[‘’]/g, "'")
+    .replace(/,\s*([}\]])/g, "$1")
+    .trim();
+
+const repairJsonWithModel = async (
+  client: Groq,
+  model: string,
+  input: string
+) => {
+  const repairCompletion = await client.chat.completions.create({
+    model,
+    temperature: 0,
+    max_tokens: 1200,
+    messages: [
+      {
+        role: "system",
+        content:
+          "You fix invalid JSON. Return ONLY a valid JSON object. No markdown, no commentary.",
+      },
+      {
+        role: "user",
+        content: `Fix this JSON:\n${input.slice(0, 8000)}`,
+      },
+    ],
+  });
+
+  const repairedRaw = repairCompletion.choices?.[0]?.message?.content ?? "";
+  if (!repairedRaw) {
+    throw new Error("Groq returned an empty repair response.");
+  }
+
+  return stripCodeFences(repairedRaw);
+};
+
 const buildPrompt = (input: RecommendationRequest) => {
   const lines = [
     `Mood: ${trimInput(input.mood) || "none"}`,
@@ -186,7 +223,21 @@ export async function POST(request: Request) {
     }
 
     const cleaned = stripCodeFences(rawText);
-    const data = JSON.parse(cleaned);
+    let data: { querySummary?: string; recommendations?: MovieRecommendation[] };
+
+    try {
+      data = JSON.parse(cleaned);
+    } catch (parseError) {
+      void parseError;
+      const normalized = normalizeJson(cleaned);
+      try {
+        data = JSON.parse(normalized);
+      } catch (normalizeError) {
+        void normalizeError;
+        const repaired = await repairJsonWithModel(client, model, cleaned);
+        data = JSON.parse(repaired);
+      }
+    }
 
     if (!Array.isArray(data?.recommendations)) {
       console.error("Groq response missing recommendations", {
